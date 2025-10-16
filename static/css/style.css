@@ -1,0 +1,77 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    transition: background 0.5s;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: background 0.5s;
+}
+
+.forecast-card {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    min-width: 130px;
+    transition: transform 0.3s;
+}
+
+.forecast-card:hover {
+    transform: translateY(-5px);
+}
+
+.forecast-card img {
+    width: 50px;
+}
+
+.forecast-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 15px;
+    scroll-behavior: smooth;
+}
+
+.details-list li {
+    list-style: none;
+    padding: 6px 0;
+}
+
+#map {
+    height: 250px;
+    border-radius: 12px;
+}
+
+.masonry-grid {
+    column-count: 3;
+    column-gap: 20px;
+}
+
+.masonry-item {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 992px) {
+    .masonry-grid {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 576px) {
+    .masonry-grid {
+        column-count: 1;
+    }
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Spinner */
+#loadingSpinner {
+    display: none;
+}

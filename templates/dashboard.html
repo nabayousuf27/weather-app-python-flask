@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>🌦 Weather Dashboard</title>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Favicon -->
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1116/1116453.png" type="image/png">
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body {% if weather %}
+style="background: {% if weather.weather_main=='clear' %}#fff9c4{% elif weather.weather_main=='rain' %}#b3e5fc{% elif weather.weather_main=='clouds' %}#e0e0e0{% else %}#0d1b2a;color:white{% endif %};"
+{% endif %}>
+
+<div class="container py-4 text-dark">
+<h1 class="text-center mb-4">🌦 Weather Dashboard</h1>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="text-center my-4">
+  <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+  <p>Fetching weather data...</p>
+</div>
+
+<!-- Search Form & Controls -->
+<form method="POST" action="/" class="d-flex justify-content-center mb-4 flex-wrap gap-2">
+    <input type="text" name="city" class="form-control w-50" placeholder="Enter city name" required>
+    <button class="btn btn-primary ms-2">Search</button>
+
+    <div class="d-flex align-items-center ms-3">
+        <label class="me-2">Units:</label>
+        <button id="celsiusBtn" class="btn btn-sm btn-outline-primary me-1">°C</button>
+        <button id="fahrenheitBtn" class="btn btn-sm btn-outline-secondary">°F</button>
+    </div>
+
+    <button id="refreshBtn" class="btn btn-outline-success ms-2">🔄 Refresh</button>
+
+    <div id="searchHistory" class="w-100 text-center mt-3">
+        <strong>Recent Searches:</strong>
+        <div id="historyButtons"></div>
+    </div>
+</form>
+
+{% if error %}
+<div class="alert alert-danger text-center">{{ error }}</div>
+{% endif %}
+
+{% if weather %}
+<div class="masonry-grid">
+
+<!-- Current Weather -->
+<div class="card masonry-item p-4 text-center">
+    <h3>{{ weather.city }}, {{ weather.country }}</h3>
+    <p class="text-muted">Local Time: {{ weather.local_time }}</p>
+    <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="icon">
+    <h2>{{ weather.temperature }}°C</h2>
+    <p class="lead">{{ weather.description }}</p>
+    <p>🌅 Sunrise: {{ weather.sunrise }} | 🌇 Sunset: {{ weather.sunset }}</p>
+</div>
+
+<!-- Air Quality -->
+<div class="card masonry-item p-4">
+    <h4 class="text-center">🌬️ Air Quality</h4>
+    <p>🌫️ AQI: <b>{{ weather.aqi }}</b> ({{ weather.aqi_desc }})</p>
+    <p>💨 PM2.5: <b>{{ weather.pm2_5 }} µg/m³</b></p>
+    <p>🌪️ PM10: <b>{{ weather.pm10 }} µg/m³</b></p>
+    <p>☀️ O₃: <b>{{ weather.o3 }} µg/m³</b></p>
+</div>
+
+<!-- Weather Details -->
+<div class="card masonry-item p-4">
+    <h4 class="text-center">Weather Details</h4>
+    <ul class="details-list">
+        <li>🌡️ Feels Like: <b>{{ weather.feels_like }}°C</b></li>
+        <li>⬆️ Max Temp: <b>{{ weather.temp_max }}°C</b></li>
+        <li>⬇️ Min Temp: <b>{{ weather.temp_min }}°C</b></li>
+        <li>💧 Humidity: <b>{{ weather.humidity }}%</b></li>
+        <li>🌬️ Wind: <b>{{ weather.wind_speed }} m/s {{ weather.wind_dir }}</b></li>
+        <li>🔵 Pressure: <b>{{ weather.pressure }} hPa</b></li>
+        <li>👁️ Visibility: <b>{{ weather.visibility_miles }} mi</b></li>
+        <li>💧 Dew Point: <b>{{ weather.dew_point }}°C</b></li>
+        <li>🌅 Sunrise in: <b>{{ weather.sunrise_countdown }}</b></li>
+        <li>🌇 Sunset in: <b>{{ weather.sunset_countdown }}</b></li>
+    </ul>
+</div>
+
+<!-- Temperature & Humidity Chart -->
+<div class="card masonry-item p-4">
+    <h4 class="text-center">Temperature & Humidity Forecast</h4>
+    <canvas id="tempChart"></canvas>
+</div>
+
+<!-- Map -->
+<div class="card masonry-item p-2">
+    <h4 class="text-center">City Location</h4>
+    <div id="map"></div>
+</div>
+
+</div>
+
+<!-- Forecast Scroll -->
+<h4 class="mb-3 mt-4">5-Day / 3-Hour Forecast</h4>
+<div class="forecast-grid mb-4">
+    {% for f in forecast %}
+    <div class="forecast-card">
+        <p>{{ f.time }}</p>
+        <img src="http://openweathermap.org/img/wn/{{ f.icon }}.png" alt="icon">
+        <p><strong>{{ f.temp }}°C</strong></p>
+        <p>💧 {{ f.humidity }}%</p>
+        <small>{{ f.description }}</small>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+</div>
+
+<!-- Footer -->
+<footer class="mt-5 py-4 bg-dark text-light text-center">
+<p>🌦 Weather Dashboard &copy; {{ current_year }} | All Rights Reserved.</p>
+<p>Developed by <strong>Vishakha Sarode</strong></p>
+<p>📍 Built with Flask, OpenWeatherMap API, Chart.js & Leaflet.js</p>
+</footer>
+
+<script>
+
+// Chart.js
+const ctx = document.getElementById('tempChart')?.getContext('2d');
+if(ctx){new Chart(ctx,{type:'line',data:{labels:{{ forecast | map(attribute='time') | list | tojson | safe }},datasets:[{label:'Temperature (°C)',data:{{ forecast | map(attribute='temp') | list | tojson | safe }},borderColor:'rgba(54, 162, 235, 1)',backgroundColor:'rgba(54, 162, 235, 0.2)',yAxisID:'y1',fill:true,tension:0.4},{label:'Humidity (%)',data:{{ forecast | map(attribute='humidity') | list | tojson | safe }},borderColor:'rgba(255, 99, 132, 1)',backgroundColor:'rgba(255, 99, 132, 0.2)',yAxisID:'y2',fill:true,tension:0.4}]},options:{responsive:true,plugins:{legend:{display:true},tooltip:{mode:'index',intersect:false}},scales:{x:{display:true,title:{display:true,text:'Time'}},y1:{display:true,title:{display:true,text:'°C'},position:'left'},y2:{display:true,title:{display:true,text:'%'},position:'right'}}}});}
+
+// Leaflet Map
+{% if weather %}
+var map = L.map('map').setView([{{ weather.lat }}, {{ weather.lon }}], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+L.marker([{{ weather.lat }}, {{ weather.lon }}]).addTo(map).bindPopup('{{ weather.city }}').openPopup();
+{% endif %}
+</script>
+<script src="/static/js/main.js"></script>
+
+</body>
+</html>
